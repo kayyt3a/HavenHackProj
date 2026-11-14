@@ -93,8 +93,9 @@
     trigger(body) {
       if (this.cool.has(body.id)) return;
       const isBlob = !!(body.plugin && body.plugin.blob);
-      const k = isBlob ? 1 : BBH.CONFIG.hazards.padObjectFactor;
-      const vx = Math.sin(this.angle) * this.power * k, vy = -Math.cos(this.angle) * this.power * k;
+      // objects get `objPower` if the pad defines one, otherwise a fraction of the blob power
+      const pw = isBlob ? this.power : (this.def.objPower != null ? this.def.objPower : this.power * BBH.CONFIG.hazards.padObjectFactor);
+      const vx = Math.sin(this.angle) * pw, vy = -Math.cos(this.angle) * pw;
       // already moving away faster than the pad would send it? leave it alone
       if (body.velocity.y / PXS < vy * 0.7) return;
       Body.setVelocity(body, { x: vx * PXS, y: vy * PXS });

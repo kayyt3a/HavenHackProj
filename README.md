@@ -36,11 +36,13 @@ Hint: some keyboards can't register that many keys at once ("ghosting"). If a bl
 
 ## Levels
 
-1. **Up We Go** – a giant bouncy ball, wide ledges. Learn the hit-and-swap rhythm.
-2. **Mushroom Hop** – heavier ball and big gaps: bounce across on mushroom pads.
-3. **Eggs-press Delivery** – a fragile egg with a damage meter. It cracks if it lands too hard (and an icy ledge!).
-4. **Crate Escalator** – a wobbly crate that lands on its corners, plus sliding platforms.
-5. **The Grand Wobble** – huge ball, wind gusts, mushrooms, ice, a spring pad, falling rocks and a roaming boulder.
+Each level is a tall tower of ledges (6-9 on the ball's main route, plus helper platforms), and blobs jump about 560 px high so they can climb it.
+
+1. **Up We Go** - a giant bouncy ball, wide ledges, side perches and stepping stones. Learn the hit-and-swap rhythm.
+2. **Mushroom Hop** - heavier ball and big gaps: mushrooms on the ledge ends fling the ball (and you) across. Stepping stones up the middle, a stone tower and a lift.
+3. **Eggs-press Delivery** - a fragile egg with a damage meter. It cracks if it lands too hard. Icy and narrow ledges, safe catch-shelves, springs.
+4. **Crate Escalator** - a wobbly crate that lands on its corners, sliding platforms between the ledges, two wall lifts and stone towers.
+5. **The Grand Wobble** - huge ball, wind gusts, mushrooms, ice, springs, falling rocks, a roaming boulder and a lift.
 
 Hazards: ice patches, wind zones, falling rocks (with a "!" warning), mushroom/spring pads that launch blobs *and* objects, and a boulder that rolls across a ledge now and then.
 
@@ -50,7 +52,7 @@ funny bounce-back messages, and a **replay of shame**: the worst moment of the l
 ## Tweaking the feel
 
 Everything lives in **`js/config.js`** with comments: gravity (`world.gravity`, 0.6 = "slightly low"), blob run speed / jump, how strong a hit is
-(`hit.impulse`, `hit.side`, `hit.keepUp`, `hit.maxSpeed`), how much heavier objects weaken hits (`hit.weightExponent`), wind, pads, camera, slow-mo and replay.
+(`blob.jumpSpeed` for jump height, `hit.impulse`, `hit.side`, `hit.keepUp`, `hit.maxSpeed`), how much heavier objects weaken hits (`hit.weightExponent`), wind, pads, camera, slow-mo and replay.
 
 ### Adding a level
 
@@ -60,9 +62,11 @@ Levels are plain data in **`js/levels-data.js`**. Copy one, change it, add it to
 {
   id: 'my-level', name: 'My Level', twist: 'shown on level select', tip: 'shown when it starts',
   theme: { skyTop: '#bde6ff', skyBottom: '#fff1e6', hillFar: '#d9ecff', hillNear: '#c8f0dc', grass: '#9fe3b5', soil: '#ffe2c7', accent: '#ff9bb8' },
-  ledges: [ { x: -300, y: -240, w: 760 }, { x: 300, y: -480, w: 760, cp: true }, { x: 0, y: -720, w: 900, cp: true, goal: true } ],
+  ledges: [ { x: -300, y: -300, w: 760 }, { x: 300, y: -600, w: 760, cp: true }, { x: 0, y: -900, w: 900, cp: true, goal: true },
+            { x: -760, y: -450, w: 180, extra: true } ],          // extra = helper platform, not on the ball's route
+  blocks: [ { x: 900, y: -300, w: 140, h: 300 } ],                // solid tower
   object: { type: 'ball', radius: 90, weight: 16 },   // 'ball' | 'egg' | 'crate'; weight is in blob-masses
-  hazards: [ { type: 'mushroom', ledge: 0, dx: 240, power: 780, angle: 18, w: 130 } ],
+  hazards: [ { type: 'mushroom', ledge: 0, dx: 240, power: 900, objPower: 760, angle: 30, w: 130 } ],   // power = blobs, objPower = ball
 }
 ```
 

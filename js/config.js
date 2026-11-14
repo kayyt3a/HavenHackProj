@@ -29,7 +29,7 @@
       airAccel: 2600,          // air steering. Higher = easier to line up under the ball
       brakeAccel: 4200,        // how fast a blob stops when you let go of the keys
       iceControl: 0.10,        // 1 = normal grip, 0 = pure ice. Applies to accel + brake on ice
-      jumpSpeed: 640,          // launch speed of a hop. Apex height = v^2 / (2 * gravity * 1000)
+      jumpSpeed: 820,          // launch speed of a hop. Apex height = v^2 / (2 * gravity * 1000)  (820 -> ~560 px)
       jumpCut: 0.55,           // releasing jump early multiplies upward speed by this (variable height)
       fallFloat: 0.45,         // fraction of gravity cancelled while falling & holding jump = "floaty"
       coyoteTime: 0.10,        // can still jump this long after walking off a ledge
@@ -41,7 +41,7 @@
       // ragdoll flop
       flopTime: 1.15,          // seconds limp
       flopHitSpeed: 430,       // hit by a rock/boulder faster than this (px/s) => flop
-      flopFallSpeed: 900,      // landing faster than this => flop
+      flopFallSpeed: 1100,     // landing faster than this => flop (jump/pad landings stay below it, long falls don't)
       flopMassBoostMax: 2.2,
     },
 

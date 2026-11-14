@@ -35,7 +35,7 @@
       this.blobs = [];
       for (let i = 0; i < playerCount; i++) this.blobs.push(new BBH.Blob(this, i));
       this.hazards = (def.hazards || []).map((h) => BBH.createHazard(h, this));
-      this.topY = Math.min(...this.ledges.map((l) => l.y)) - 1200;
+      this.topY = Math.min(...this.ledges.map((l) => l.y), ...this.blocks.map((b) => b.y)) - 1200;
       Composite.add(this.engine.world, Bodies.rectangle(0, this.topY - 30, half * 2 + 200, 60, { isStatic: true, label: 'ceiling' }));
 
       Events.on(this.engine, 'collisionStart', (e) => this.onCollisions(e.pairs, true));
@@ -64,6 +64,15 @@
       const wl = Bodies.rectangle(-half - 30, -tall / 2 + 400, 60, tall, { isStatic: true, friction: 0, label: 'wall' });
       const wr = Bodies.rectangle(half + 30, -tall / 2 + 400, 60, tall, { isStatic: true, friction: 0, label: 'wall' });
       Composite.add(this.engine.world, [floor, wl, wr]);
+      // solid blocks (pillars / towers): solid from every side
+      this.blocks = (this.def.blocks || []).map((b) => {
+        const B = Object.assign({}, b);
+        B.x0 = b.x - b.w / 2; B.x1 = b.x + b.w / 2;
+        const body = Bodies.rectangle(b.x, b.y + b.h / 2, b.w, b.h, { isStatic: true, friction: 0.8, frictionStatic: 1, label: 'block', chamfer: { radius: 6 } });
+        body.plugin.surface = 'grass';
+        Composite.add(this.engine.world, body);
+        return B;
+      });
       // ledges (one-way: solid only when you come from above)
       this.ledges = this.def.ledges.map((l) => {
         const L = Object.assign({}, l);
@@ -237,6 +246,7 @@
       const bottom = ob.bottom();
       let on = null;
       for (const L of this.ledges) if (c.x >= L.x0 && c.x <= L.x1 && Math.abs(bottom - L.y) < 18) on = L;
+      if (!on) for (const B of this.blocks) if (c.x >= B.x0 && c.x <= B.x1 && Math.abs(bottom - B.y) < 18) on = B;   // resting on a block: allowed, but it's no checkpoint
       if (on && Math.abs(v.y) < 80 && Math.abs(v.x) < 300) { this.restT = on === this.restLedge ? this.restT + dt : 0; this.restLedge = on; }
       else { this.restT = 0; this.restLedge = null; }
       if (this.restLedge && this.restT >= R.restTime && !this.pendingBounce) {
@@ -386,6 +396,18 @@
       ctx.restore();
     }
 
+    drawBlock(ctx, B, th) {
+      ctx.save();
+      ctx.fillStyle = th.soil; ctx.strokeStyle = 'rgba(80,60,100,0.45)'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.roundRect(B.x0, B.y, B.w, B.h, 14); ctx.fill(); ctx.stroke();
+      ctx.save(); ctx.clip();
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 8;
+      for (let y = B.y + 70; y < B.y + B.h; y += 90) { ctx.beginPath(); ctx.moveTo(B.x0, y); ctx.lineTo(B.x1, y); ctx.stroke(); }
+      ctx.restore();
+      ctx.fillStyle = th.grass; ctx.beginPath(); ctx.roundRect(B.x0 - 4, B.y - 4, B.w + 8, 20, 10); ctx.fill(); ctx.stroke();
+      ctx.restore();
+    }
+
     drawFloor(ctx, cam, th) {
       const x0 = this.minX - 400, x1 = this.maxX + 400, y = this.floorY;
       ctx.fillStyle = th.soil; ctx.fillRect(x0, y, x1 - x0, 1600);
@@ -432,6 +454,7 @@
       const th = this.def.theme;
       this.drawWalls(ctx, cam, th);
       this.drawFloor(ctx, cam, th);
+      for (const B of this.blocks) if (B.y < cam.bottom + 80 && B.y + B.h > cam.top - 80) this.drawBlock(ctx, B, th);
       for (const L of this.ledges) if (L.y > cam.top - 120 && L.y < cam.bottom + 120) this.drawIsland(ctx, L, th, t);
       this.checkpoints.forEach((c, i) => {
         if (c.y < cam.top - 250 || c.y > cam.bottom + 250) return;
