@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bounce Back Hill</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <!-- in-game HUD -->
+  <div id="hud" class="hidden">
+    <div class="hud-pill hud-level" id="hud-level"></div>
+    <div class="hud-pill hud-time" id="hud-time">0:00.0</div>
+    <div class="hud-pill hud-bounces" title="Bounce backs"><span class="ico">↺</span> <b id="hud-bounces">0</b></div>
+    <div class="hud-pill hud-combo" id="hud-combo-wrap"><span class="ico">⚡</span> Chain <b id="hud-combo">0</b></div>
+    <div class="hud-pill hud-bar hidden" id="hud-bar-wrap"><span id="hud-bar-label">Egg damage</span><div class="bar"><div class="bar-fill" id="hud-bar-fill"></div></div></div>
+    <div class="hud-buttons">
+      <button id="btn-mute" class="icon-btn" title="Mute (M)" aria-label="Mute"></button>
+      <button id="btn-pause" class="icon-btn" title="Pause (Esc)" aria-label="Pause"></button>
+    </div>
+  </div>
+  <div id="toast" class="toast hidden"></div>
+  <div id="bigtext" class="bigtext hidden"></div>
+  <div id="failmsg" class="failmsg hidden"></div>
+  <div id="replay-banner" class="replay-banner hidden"><span class="rec-dot"></span> REPLAY OF SHAME <small>(press any key to skip)</small></div>
+
+  <!-- title -->
+  <section id="screen-title" class="screen">
+    <div class="panel title-panel">
+      <h1 class="logo" id="logo"></h1>
+      <p class="tagline">Couch co-op chaos. Keep the giant ball in the air, climb the ledges, bounce back when it all goes wrong.</p>
+      <div class="rules">
+        <div><b>Bump the ball</b> to hit it up.</div>
+        <div>The blob that just hit it turns <b>ghostly</b>. A <b>different</b> blob has to hit it next!</div>
+      </div>
+      <div class="picker">
+        <span>Players</span>
+        <button class="pill-btn" data-players="2">2</button>
+        <button class="pill-btn" data-players="3">3</button>
+        <button class="pill-btn" data-players="4">4</button>
+      </div>
+      <div class="controls" id="controls"></div>
+      <button class="big-btn" id="btn-play">Play</button>
+      <p class="hint">Enter to continue · 2 / 3 / 4 to pick players · M to mute</p>
+    </div>
+  </section>
+
+  <!-- level select -->
+  <section id="screen-levels" class="screen hidden">
+    <div class="panel levels-panel">
+      <h2>Pick a hill</h2>
+      <div class="level-grid" id="level-grid"></div>
+      <button class="ghost-btn" id="btn-levels-back">← Back</button>
+    </div>
+  </section>
+
+  <!-- pause -->
+  <section id="screen-pause" class="screen hidden">
+    <div class="panel small">
+      <h2>Paused</h2>
+      <button class="big-btn" id="btn-resume">Resume</button>
+      <button class="mid-btn" id="btn-bounce">Bounce back to checkpoint</button>
+      <button class="mid-btn" id="btn-restart">Restart level</button>
+      <button class="mid-btn" id="btn-replay-toggle">Replay of shame: on</button>
+      <button class="ghost-btn" id="btn-quit">Quit to menu</button>
+    </div>
+  </section>
+
+  <!-- results -->
+  <section id="screen-results" class="screen hidden">
+    <div class="panel results">
+      <h2>Summit!</h2>
+      <div class="rating" id="res-rating"></div>
+      <div class="rating-sub" id="res-sub"></div>
+      <div class="stats">
+        <div><span>Time</span><b id="res-time"></b><em id="res-time-best"></em></div>
+        <div><span>Bounce backs</span><b id="res-bounces"></b><em id="res-bounces-best"></em></div>
+        <div><span>Best chain</span><b id="res-combo"></b></div>
+      </div>
+      <div class="row">
+        <button class="big-btn" id="btn-next">Next hill →</button>
+        <button class="mid-btn" id="btn-retry">Try again</button>
+        <button class="ghost-btn" id="btn-results-menu">Level select</button>
+      </div>
+    </div>
+  </section>
+
+  <noscript>Bounce Back Hill needs JavaScript.</noscript>
+
+  <script src="lib/matter.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/levels-data.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/camera.js"></script>
+  <script src="js/blob.js"></script>
+  <script src="js/object.js"></script>
+  <script src="js/hazards.js"></script>
+  <script src="js/level.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
