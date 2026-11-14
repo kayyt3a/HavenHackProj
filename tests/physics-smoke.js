@@ -61,4 +61,31 @@ for (const def of BBH.LEVELS) {
   assert.equal(blob.limp, 0, 'jump did not recover a flopped blob');
 }
 
+// Regression: speed by itself must not trigger the dramatic NOOO warning.
+// It only becomes eligible after a long fall from the current arc's peak.
+{
+  const level = new BBH.Level(BBH.LEVELS[0], 2);
+  const ball = level.object.bodies[0];
+  const blob = level.blobs[0];
+  let noooCount = 0;
+  level.onEvent = (name) => { if (name === 'nooo') noooCount++; };
+  level.noooCd = 0;
+  blob.locked = true;
+
+  level.fallPeakY = -300;
+  Matter.Body.setPosition(ball, { x: 0, y: -200 });
+  Matter.Body.setVelocity(ball, { x: 0, y: 11 });
+  Matter.Body.setPosition(blob.body, { x: 0, y: 20 });
+  level.checkRules(1 / 60);
+  assert.equal(noooCount, 0, 'short fast bounce incorrectly triggered NOOO');
+
+  level.pendingBounce = null;
+  level.fallPeakY = -700;
+  Matter.Body.setPosition(ball, { x: 0, y: -160 });
+  Matter.Body.setVelocity(ball, { x: 0, y: 11 });
+  Matter.Body.setPosition(blob.body, { x: 0, y: 50 });
+  level.checkRules(1 / 60);
+  assert.equal(noooCount, 1, 'long dangerous fall did not trigger NOOO');
+}
+
 console.log(`Physics smoke checks passed for ${BBH.LEVELS.length} levels.`);

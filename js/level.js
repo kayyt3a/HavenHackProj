@@ -16,6 +16,7 @@
       this.stepMs = 1000 / W.stepHz;
       this.time = 0; this.rocks = []; this.onEvent = null; this.oneWays = [];
       this.cp = 0; this.won = false; this.pendingBounce = null; this.noooCd = 0;
+      this.fallPeakY = 0;
       this.dramas = []; this.rec = []; this.simT = 0;
       this.lastHitter = null; this.hitCd = 0; this.combo = 0; this.bestCombo = 0; this.totalHits = 0;
       this.restT = 0; this.restLedge = null;
@@ -136,6 +137,7 @@
         b.happy = 0; b.lastVx = 0; b.lastVy = 0;
       });
       this.lastHitter = null; this.combo = 0; this.restT = 0;
+      this.fallPeakY = ob.center().y;
       this.pendingBounce = null; this.noooCd = 2; this.rec.length = 0;
     }
 
@@ -222,6 +224,9 @@
       if (!other.isStatic && !(other.plugin && other.plugin.kinematic)) return;
       if (other.label === 'wall' || other.label === 'ceiling') return;
       if (rel < 60) return;
+      // A real landing ends the current fall.  The next dramatic drop must
+      // earn its own distance instead of inheriting height from an old bounce.
+      this.fallPeakY = this.object.center().y;
       if (this.combo >= 4) { this.emit('comboLost', { count: this.combo, x, y }); this.drama(40 + this.combo * 6, 'combo', x, y); }
       this.combo = 0;
     }
@@ -256,6 +261,11 @@
 
     checkRules(dt) {
       const R = BBH.CONFIG.rules, ob = this.object, c = ob.center(), v = ob.speed();
+      // Track the top of the current arc. Y grows downward, so the smallest Y
+      // is the peak. Speed alone made tiny, sharp bounces shout "NOOOO"; the
+      // warning now also requires a fall spanning roughly two level tiers.
+      if (v.y <= 0 || c.y < this.fallPeakY) this.fallPeakY = c.y;
+      const fallDistance = Math.max(0, c.y - this.fallPeakY);
       // is the object resting on a ledge?
       const bottom = ob.bottom();
       let on = null;
@@ -294,7 +304,8 @@
         }
       }
       // "NOOO": the object plummets onto a teammate who is locked out and can't catch it, or a long chain is dropped
-      if (this.noooCd <= 0 && !this.won && !this.pendingBounce && v.y > R.noooSpeed) {
+      if (this.noooCd <= 0 && !this.won && !this.pendingBounce &&
+          v.y > R.noooSpeed && fallDistance >= R.noooMinDrop) {
         for (const b of this.blobs) {
           if (Math.abs(b.x - c.x) < ob.radius + 70 && b.y > c.y && b.y - c.y < 520 && b.locked) {
             this.noooCd = R.noooCooldown;

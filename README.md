@@ -99,4 +99,6 @@ Physics runs at a fixed 60 Hz regardless of the display's frame rate. Best times
 
 One-way islands stay non-solid until a rising player or objective has fully cleared them. This prevents large objectives from becoming pinched between islands. If a blob is ever caught on a platform edge, steering for a moment gently frees it; pressing jump also recovers early from a ragdoll flop.
 
+The dramatic “NOOOO” warning is reserved for genuinely long drops: the objective must be falling quickly **and** have dropped at least 520 pixels from its latest peak or landing.
+
 Matter.js is MIT licensed (`lib/matter-LICENSE.txt`).

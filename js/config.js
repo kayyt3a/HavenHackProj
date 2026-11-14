@@ -87,6 +87,7 @@
       restTime: 0.35,          // object must sit on a ledge this long to claim it as a checkpoint / the summit
       blobRescueDepth: 700,    // a blob this far below the object is plopped back near it (free)
       noooSpeed: 520,          // object falling faster than this toward a locked-out teammate => NOOO
+      noooMinDrop: 520,        // also require a genuinely long fall from the last peak/landing
       noooCooldown: 7,
       respawnDelay: 0.5,
     },
