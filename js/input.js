@@ -29,7 +29,9 @@
     }
   });
   window.addEventListener('keyup', (e) => down.delete(e.code));
-  window.addEventListener('blur', () => down.clear());
+  function clearAll() { down.clear(); jumpQueued.fill(false); }
+  window.addEventListener('blur', clearAll);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) clearAll(); });
 
   BBH.Input = {
     maps: MAPS,

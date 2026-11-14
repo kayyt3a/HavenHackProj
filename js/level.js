@@ -86,15 +86,29 @@
       });
     }
 
-    /** one-way platforms: each dynamic body only collides with a ledge while it is above that ledge's top */
+    /**
+     * One-way platforms only become solid while a body approaches from above.
+     *
+     * Checking position alone used to re-enable a platform at the exact moment a
+     * rising body's lower edge crossed its top.  A large ball could then be
+     * pinched between two islands, while a blob could be caught inside an edge
+     * and appear to lose its controls.  Relative velocity is the important bit:
+     * anything travelling upward must remain ghosted until it has completely
+     * cleared the platform.
+     */
     updateFilters() {
       const tol = BBH.CONFIG.world.ledgeTolerance;
       const apply = (b, extraMask) => {
         let mask = 0xFFFFFFFF;
-        const bottom = b.bounds.max.y, vyStep = Math.max(0, b.velocity.y);
+        const bottom = b.bounds.max.y;
         for (const ow of this.oneWays) {
           const top = ow.body.bounds.min.y;
-          if (bottom > top + tol + vyStep * 1.3) mask &= ~ow.bit;
+          const platformVy = ow.body.plugin && ow.body.plugin.vel ? ow.body.plugin.vel.y * PXS : 0;
+          const relativeVy = b.velocity.y - platformVy;
+          const fallingAllowance = Math.max(0, relativeVy) * 1.5;
+          const fullyAbove = bottom <= top + tol + fallingAllowance;
+          const approachingFromAbove = relativeVy >= -0.2;
+          if (!fullyAbove || !approachingFromAbove) mask &= ~ow.bit;
         }
         b.collisionFilter.mask = (mask & extraMask) | 0;
       };

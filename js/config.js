@@ -39,10 +39,16 @@
       airFriction: 0.012,
       groundMinNormalY: 0.55,  // how steep a surface can be and still count as "ground"
       // ragdoll flop
-      flopTime: 1.15,          // seconds limp
+      flopTime: 0.8,           // seconds limp; jump can recover early after the minimum lock below
+      flopMinLock: 0.18,       // impact beat before jump-to-recover is allowed
       flopHitSpeed: 430,       // hit by a rock/boulder faster than this (px/s) => flop
       flopFallSpeed: 1100,     // landing faster than this => flop (jump/pad landings stay below it, long falls don't)
       flopMassBoostMax: 2.2,
+      // defensive recovery for the rare case where a physics body is pinched in a ledge edge
+      stuckSpeed: 18,          // px/s: steering below this speed counts as blocked
+      stuckTime: 0.42,         // seconds of active airborne steering before a small escape nudge
+      unstickSpeed: 150,       // horizontal px/s after the nudge
+      unstickLift: 180,        // upward px/s after the nudge
     },
 
     // ---------------------------------------------------------------- THE HIT

@@ -46,6 +46,7 @@
 
       this.grounded = false; this.coyote = 0; this.jumpBuf = 0; this.jumping = false; this.jumpHeld = false;
       this.limp = 0;
+      this.stuckT = 0;
       this.locked = false;          // just hit the object: ghosted until a teammate hits it
       this.groundVel = { x: 0, y: 0 }; this.onIce = false;
       this._hits = 0; this._gvx = 0; this._gvy = 0; this._ice = false;
@@ -61,6 +62,7 @@
       Body.setAngle(this.body, 0); Body.setAngularVelocity(this.body, 0);
       Body.setPosition(this.body, { x, y }); Body.setVelocity(this.body, { x: 0, y: 0 });
       this.limp = 0; this.coyote = 0; this.jumpBuf = 0; this.grounded = false; this.jumping = false;
+      this.stuckT = 0;
       this.locked = false; this.hitFlash = 0;
       this.sq = 0.25; this.sqV = 0; this.face = 'normal'; this.fear = 0;
     }
@@ -140,6 +142,9 @@
 
       if (this.limp > 0) {
         this.limp -= dt;
+        // A flop is funny; a second of apparently dead controls is not.  After
+        // the brief impact beat, jump lets the player spring back immediately.
+        if (inp.jumpPressed && this.limp < cfg.flopTime - cfg.flopMinLock) this.limp = 0;
         if (this.limp <= 0) this.recover();
         return;
       }
@@ -147,6 +152,20 @@
       const m = b.mass;
       const vx = b.velocity.x / PXS, vy = b.velocity.y / PXS;
       const dir = inp.x;
+
+      // Last-resort recovery for rare physics pinches.  This only fires while
+      // airborne, actively steering, almost motionless, and away from the arena
+      // walls, so it cannot help a player push through an ordinary obstacle.
+      const againstWall = (dir < 0 && b.position.x < this.level.minX + this.r + 12) ||
+        (dir > 0 && b.position.x > this.level.maxX - this.r - 12);
+      if (dir && !this.grounded && !againstWall && Math.abs(vx) < cfg.stuckSpeed) this.stuckT += dt;
+      else this.stuckT = 0;
+      if (this.stuckT >= cfg.stuckTime) {
+        Body.setPosition(b, { x: b.position.x + dir * 8, y: b.position.y - 10 });
+        Body.setVelocity(b, { x: dir * cfg.unstickSpeed * PXS, y: Math.min(b.velocity.y, -cfg.unstickLift * PXS) });
+        this.stuckT = 0;
+      }
+
       const iceF = this.onIce ? cfg.iceControl : 1;
       let fx = 0, fy = 0;
       if (this.grounded) {
