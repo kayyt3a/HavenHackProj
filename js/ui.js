@@ -9,9 +9,9 @@
     pause: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg>',
   };
   const LOGO_COLORS = ['#ff7eb6', '#4aa8ff', '#ffb400', '#4fd96a', '#8d7bff', '#ff5a5f'];
-  const SCREENS = ['title', 'levels', 'pause', 'results'];
+  const SCREENS = ['title', 'levels', 'shop', 'pause', 'results'];
 
-  let toastTimer = 0, failTimer = 0, lastText = {};
+  let toastTimer = 0, failTimer = 0, lastText = {}, shopPlayer = 0;
   const setText = (id, v) => { if (lastText[id] !== v) { lastText[id] = v; $(id).textContent = v; } };
 
   const UI = {
@@ -37,6 +37,7 @@
       document.querySelectorAll('[data-players]').forEach((b) => b.addEventListener('click', () => { BBH.Sound.unlock(); BBH.Sound.click(); UI.on.players(+b.dataset.players); }));
       const bind = (id, ev, sound) => $(id).addEventListener('click', () => { BBH.Sound.unlock(); (sound || BBH.Sound.click)(); UI.on[ev] && UI.on[ev](); });
       bind('btn-play', 'toLevels'); bind('btn-levels-back', 'toTitle', BBH.Sound.back);
+      bind('btn-shop', 'shop'); bind('btn-level-shop', 'shop'); bind('btn-shop-back', 'shopBack', BBH.Sound.back);
       bind('btn-resume', 'resume'); bind('btn-bounce', 'manualBounce'); bind('btn-restart', 'restart');
       bind('btn-replay-toggle', 'toggleReplay'); bind('btn-quit', 'quit', BBH.Sound.back);
       bind('btn-next', 'next'); bind('btn-retry', 'retry'); bind('btn-results-menu', 'toLevels');
@@ -83,13 +84,58 @@
       });
     },
 
+    renderShop(cosmetics) {
+      const C = BBH.Cosmetics, profiles = cosmetics.players;
+      const tabs = $('shop-tabs'); tabs.innerHTML = '';
+      profiles.forEach((p, i) => {
+        const c = C.findColor(p.color);
+        const b = document.createElement('button');
+        b.className = 'shop-tab' + (i === shopPlayer ? ' on' : '');
+        b.style.setProperty('--c', c.color);
+        b.textContent = `P${i + 1} · ${p.coins} ◈`;
+        b.addEventListener('click', () => { BBH.Sound.click(); shopPlayer = i; UI.renderShop(cosmetics); });
+        tabs.appendChild(b);
+      });
+      const p = profiles[shopPlayer], col = C.findColor(p.color);
+      $('shop-balance').innerHTML = `<span style="color:${col.color}">P${shopPlayer + 1}</span> balance <b>${p.coins}</b> ◈`;
+
+      const makeItem = (item, kind, owned, equipped, previewStyle, previewText = '') => {
+        const b = document.createElement('button');
+        b.className = `shop-item ${owned ? 'owned' : 'locked'} ${equipped ? 'equipped' : ''}`;
+        b.innerHTML = `<span class="preview" style="${previewStyle}">${previewText}</span><span class="item-name">${item.name}</span><span class="price">${owned ? (equipped ? 'Wearing now' : 'Owned · equip') : item.cost + ' ◈'}</span>`;
+        b.addEventListener('click', () => { BBH.Sound.click(); UI.on.shopItem && UI.on.shopItem(shopPlayer, kind, item.id); });
+        return b;
+      };
+
+      const colors = $('shop-colors'); colors.innerHTML = '';
+      C.colors.forEach((item) => colors.appendChild(makeItem(item, 'color', p.ownedColors.includes(item.id), p.color === item.id, `--preview:${item.color};background:${item.color}`)));
+      const acc = $('shop-accessories'); acc.innerHTML = '';
+      C.accessories.forEach((item) => acc.appendChild(makeItem(item, 'accessory', p.ownedAccessories.includes(item.id), p.accessory === item.id, `--preview:${col.color};background:${col.color}`, item.icon)));
+      const balls = $('shop-balls'); balls.innerHTML = '';
+      C.balls.forEach((item) => {
+        const b = document.createElement('button');
+        b.className = 'shop-item owned' + (cosmetics.ball === item.id ? ' equipped' : '');
+        b.innerHTML = `<span class="preview">${item.icon}</span><span class="item-name">${item.name}</span><span class="price">FREE · equip</span>`;
+        b.addEventListener('click', () => { BBH.Sound.click(); UI.on.ballSkin && UI.on.ballSkin(item.id); });
+        balls.appendChild(b);
+      });
+    },
+
     fmt(t) { const m = Math.floor(t / 60), s = t - m * 60; return `${m}:${s < 10 ? '0' : ''}${s.toFixed(1)}`; },
 
     // HUD
     setLevel(name) { setText('hud-level', name); },
     setTime(t) { setText('hud-time', UI.fmt(t)); },
     setBounces(n) { setText('hud-bounces', String(n)); },
-    setCombo(n) { setText('hud-combo', String(n)); $('hud-combo-wrap').classList.toggle('hot', n >= 3); },
+    setCombo(n) { setText('hud-combo', n ? `${n}×` : '0×'); $('hud-combo-wrap').classList.toggle('hot', n >= 3); },
+    setWallets(profiles, n) {
+      const el = $('hud-wallets'); el.innerHTML = '';
+      for (let i = 0; i < n; i++) {
+        const c = BBH.Cosmetics.findColor(profiles[i].color);
+        const d = document.createElement('span'); d.className = 'hud-wallet'; d.style.setProperty('--c', c.color);
+        d.textContent = `P${i + 1} ${profiles[i].coins} ◈`; el.appendChild(d);
+      }
+    },
     setBar(info) {
       const wrap = $('hud-bar-wrap');
       wrap.classList.toggle('hidden', !info);
@@ -123,6 +169,7 @@
       $('res-time').textContent = UI.fmt(d.time); $('res-bounces').textContent = d.bounces; $('res-combo').textContent = d.combo;
       $('res-time-best').textContent = d.newTime ? '★ new best!' : ''; $('res-bounces-best').textContent = d.newBounces ? '★ new best!' : '';
       $('btn-next').classList.toggle('hidden', !d.hasNext);
+      $('res-earnings').innerHTML = d.earnings.map((n, i) => `<span class="earning-pill" style="--c:${BBH.BLOB_STYLES[i].color}">P${i + 1} +${n} ◈</span>`).join('');
     },
   };
   BBH.UI = UI;

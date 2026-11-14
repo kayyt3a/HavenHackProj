@@ -15,6 +15,7 @@
     <div class="hud-pill hud-time" id="hud-time">0:00.0</div>
     <div class="hud-pill hud-bounces" title="Bounce backs"><span class="ico">↺</span> <b id="hud-bounces">0</b></div>
     <div class="hud-pill hud-combo" id="hud-combo-wrap"><span class="ico">⚡</span> Chain <b id="hud-combo">0</b></div>
+    <div class="hud-wallets" id="hud-wallets"></div>
     <div class="hud-pill hud-bar hidden" id="hud-bar-wrap"><span id="hud-bar-label">Egg damage</span><div class="bar"><div class="bar-fill" id="hud-bar-fill"></div></div></div>
     <div class="hud-buttons">
       <button id="btn-mute" class="icon-btn" title="Mute (M)" aria-label="Mute"></button>
@@ -42,8 +43,8 @@
         <button class="pill-btn" data-players="4">4</button>
       </div>
       <div class="controls" id="controls"></div>
-      <button class="big-btn" id="btn-play">Play</button>
-      <p class="hint">Enter to continue · 2 / 3 / 4 to pick players · M to mute</p>
+      <div class="row menu-actions"><button class="big-btn" id="btn-play">Play</button><button class="mid-btn shop-btn" id="btn-shop">Cosmetic Shop</button></div>
+      <p class="hint">Enter to continue · S for shop · 2 / 3 / 4 to pick players · M to mute</p>
     </div>
   </section>
 
@@ -52,7 +53,21 @@
     <div class="panel levels-panel">
       <h2>Pick a hill</h2>
       <div class="level-grid" id="level-grid"></div>
-      <button class="ghost-btn" id="btn-levels-back">← Back</button>
+      <div class="row"><button class="mid-btn shop-btn" id="btn-level-shop">Cosmetic Shop</button><button class="ghost-btn" id="btn-levels-back">← Back</button></div>
+    </div>
+  </section>
+
+  <!-- persistent cosmetics shop -->
+  <section id="screen-shop" class="screen hidden">
+    <div class="panel shop-panel">
+      <div class="shop-heading"><div><span class="shop-kicker">Spend your combo rewards</span><h2>Blob Boutique</h2></div><button class="ghost-btn" id="btn-shop-back">← Back</button></div>
+      <p class="shop-explain">The player who lands a hit earns Bounce Bucks equal to the chain. The 10th hit pays <b>+10</b> to that blob.</p>
+      <div class="shop-tabs" id="shop-tabs"></div>
+      <div class="shop-balance" id="shop-balance"></div>
+      <h3>Blob colours</h3><div class="shop-grid color-grid" id="shop-colors"></div>
+      <h3>Blob cosmetics</h3><div class="shop-grid" id="shop-accessories"></div>
+      <div class="ball-shop-head"><div><h3>Ball skins</h3><span>Always free — pick any one</span></div></div>
+      <div class="shop-grid ball-grid" id="shop-balls"></div>
     </div>
   </section>
 
@@ -79,6 +94,7 @@
         <div><span>Bounce backs</span><b id="res-bounces"></b><em id="res-bounces-best"></em></div>
         <div><span>Best chain</span><b id="res-combo"></b></div>
       </div>
+      <div class="run-earnings" id="res-earnings"></div>
       <div class="row">
         <button class="big-btn" id="btn-next">Next hill →</button>
         <button class="mid-btn" id="btn-retry">Try again</button>
@@ -92,6 +108,7 @@
   <script src="lib/matter.min.js"></script>
   <script src="js/config.js"></script>
   <script src="js/levels-data.js"></script>
+  <script src="js/cosmetics.js"></script>
   <script src="js/input.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/particles.js"></script>

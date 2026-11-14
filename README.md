@@ -101,4 +101,8 @@ One-way islands stay non-solid until a rising player or objective has fully clea
 
 The dramatic “NOOOO” warning is reserved for genuinely long drops: the objective must be falling quickly **and** have dropped at least 520 pixels from its latest peak or landing.
 
+## Blob Boutique
+
+Open the **Cosmetic Shop** from the title or level-select screen (or press **S**). Every player has an independent wallet saved in `localStorage`. A successful objective hit pays the hitter Bounce Bucks equal to the current chain: hit 1 earns `+1`, hit 5 earns `+5`, and the 10th consecutive hit earns `+10`. Spend them on colours and accessories, then equip purchases for that player. Ball skins are always free and can be switched at any time from the shop.
+
 Matter.js is MIT licensed (`lib/matter-LICENSE.txt`).

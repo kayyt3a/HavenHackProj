@@ -261,7 +261,37 @@
       ctx.fillStyle = 'rgba(255,255,255,0.65)';
       ctx.beginPath(); ctx.ellipse(-r * 0.52, -r * 0.62, r * 0.2, r * 0.11, -0.7, 0, 6.3); ctx.fill();
       ctx.beginPath(); ctx.arc(-r * 0.2, -r * 0.8, r * 0.06, 0, 6.3); ctx.fill();
+      this.drawAccessory(ctx, p, r, false);
       this.drawFace(ctx, p, r);
+      this.drawAccessory(ctx, p, r, true);
+      ctx.restore();
+    }
+
+    drawAccessory(ctx, p, r, foreground) {
+      const item = this.style.accessory || 'none';
+      if (item === 'none') return;
+      ctx.save(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      if (!foreground && item === 'spots') {
+        ctx.fillStyle = 'rgba(255,255,255,.48)';
+        [[-12,-2,5],[13,10,4],[8,-16,3],[-15,15,3]].forEach(([x,y,s]) => { ctx.beginPath(); ctx.arc(x*r/24,y*r/24,s*r/24,0,6.3); ctx.fill(); });
+      } else if (!foreground && item === 'antenna') {
+        ctx.strokeStyle = '#3a2f4a'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(0,-r*.78); ctx.quadraticCurveTo(-8,-r*1.3,3,-r*1.55); ctx.stroke();
+        ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.arc(3,-r*1.58,6,0,6.3); ctx.fill(); ctx.stroke();
+      } else if (!foreground && item === 'party') {
+        ctx.fillStyle = '#ff7eb6'; ctx.strokeStyle = '#3a2f4a'; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(-13,-r*.82); ctx.lineTo(4,-r*1.75); ctx.lineTo(18,-r*.8); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.arc(4,-r*1.76,5,0,6.3); ctx.fill(); ctx.stroke();
+      } else if (!foreground && item === 'crown') {
+        ctx.fillStyle = '#ffd23f'; ctx.strokeStyle = '#3a2f4a'; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(-20,-r*.82); ctx.lineTo(-18,-r*1.45); ctx.lineTo(-6,-r*1.15); ctx.lineTo(0,-r*1.62); ctx.lineTo(9,-r*1.14); ctx.lineTo(21,-r*1.43); ctx.lineTo(19,-r*.82); ctx.closePath(); ctx.fill(); ctx.stroke();
+      } else if (foreground && item === 'shades') {
+        ctx.fillStyle = '#29243b'; ctx.strokeStyle = '#15121f'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.roundRect(-22,-14,20,13,4); ctx.roundRect(2,-14,20,13,4); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(-2,-9); ctx.lineTo(2,-9); ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(-18,-11); ctx.lineTo(-12,-5); ctx.moveTo(6,-11); ctx.lineTo(12,-5); ctx.stroke();
+      }
       ctx.restore();
     }
 

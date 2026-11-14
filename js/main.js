@@ -8,8 +8,9 @@
 
   // ------------------------------------------------------------------ save data
   const SAVE_KEY = 'bounceBackHill.v1';
-  let save = { best: {}, muted: false, replay: true, players: 4 };
+  let save = { best: {}, muted: false, replay: true, players: 4, cosmetics: null };
   try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (s) save = Object.assign(save, s); } catch (e) { /* private mode etc. */ }
+  save.cosmetics = BBH.Cosmetics.apply(save.cosmetics);
   const persist = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* ignore */ } };
 
   // ---------------------------------------------------------------- flavour text
@@ -31,11 +32,11 @@
 
   // ------------------------------------------------------------------ game state
   const G = {
-    state: 'title',            // title | levels | playing | paused | replay | results
+    state: 'title',            // title | levels | shop | playing | paused | replay | results
     players: clamp(save.players | 0 || 4, 2, 4),
     levelIdx: 0, level: null, demo: null,
     ts: 1, slow: 0, acc: 0, clock: 0,
-    bounces: 0, bounceReq: null, replay: null, pending: null, winT: 0, floaters: [],
+    bounces: 0, bounceReq: null, replay: null, pending: null, winT: 0, floaters: [], runCoins: [0,0,0,0], shopReturn: 'title',
   };
   let dpr = 1, vw = 800, vh = 600, last = performance.now();
 
@@ -59,11 +60,15 @@
         if (d.speed > 220) { particles.dust(d.x, d.y, 4); Sound.land(clamp(d.speed / 700, 0.2, 1)); }
         break;
       case 'hit': {
+        const earned = BBH.Cosmetics.award(save.cosmetics, d.blob.index, d.combo);
+        G.runCoins[d.blob.index] += earned;
+        persist(); UI.setWallets(save.cosmetics.players, G.players);
         Sound.hit(d.power, d.combo);
         particles.sparks(d.x, d.y, d.blob.style.color, 12, 300);
         particles.ring(d.x, d.y, '#ffffff', 70);
         cam.shake(2.5 + Math.min(d.combo, 8) * 0.3);
         floater(d.x, d.y - 40, d.combo > 1 ? 'x' + d.combo : 'BONK', d.blob.style.color, d.combo > 3 ? 34 : 26);
+        floater(d.x, d.y + 28, `P${d.blob.index + 1} +${earned} ◈`, '#fff7a8', 18);
         break;
       }
       case 'flop': Sound.flop(); particles.stars(d.x, d.y - 20, 5); cam.shake(6); floater(d.x, d.y - 40, 'oof!', '#fff', 26); break;
@@ -103,15 +108,17 @@
   // ---------------------------------------------------------------- level flow
   function startLevel(idx) {
     G.levelIdx = idx;
+    BBH.Cosmetics.apply(save.cosmetics);
     const def = BBH.LEVELS[idx];
     G.level = new BBH.Level(def, G.players);
     G.level.onEvent = onEvent;
-    G.bounces = 0; G.bounceReq = null; G.replay = null; G.pending = null; G.winT = 0; G.slow = 0; G.ts = 1; G.acc = 0; G.floaters = [];
+    G.bounces = 0; G.bounceReq = null; G.replay = null; G.pending = null; G.winT = 0; G.slow = 0; G.ts = 1; G.acc = 0; G.floaters = []; G.runCoins = [0,0,0,0];
     particles.clear(); Input.clearEdges();
     const c = G.level.object.center();
     cam.snapTo(c.x, c.y - 120, 0.55); cam.punch = 0;
     G.state = 'playing';
     UI.show(null); UI.hud(true); UI.setLevel(`${idx + 1}. ${def.name}`); UI.setBounces(0); UI.setCombo(0); UI.setTime(0);
+    UI.setWallets(save.cosmetics.players, G.players);
     UI.hideFail(); UI.replayBanner(false);
     UI.toast(def.tip, 6500);
     Sound.respawn();
@@ -155,17 +162,23 @@
     const [, rating, sub] = RATINGS.find((r) => bounces <= r[0]);
     G.state = 'results';
     UI.hud(false); UI.hideFail(); UI.show('results');
-    UI.results({ rating, sub, time, bounces, combo: L.bestCombo, newTime: newTime && !!prev, newBounces: newBounces && !!prev, hasNext: G.levelIdx < BBH.LEVELS.length - 1 });
+    UI.results({ rating, sub, time, bounces, combo: L.bestCombo, earnings: G.runCoins.slice(0, G.players), newTime: newTime && !!prev, newBounces: newBounces && !!prev, hasNext: G.levelIdx < BBH.LEVELS.length - 1 });
   }
 
-  function goTitle() { G.state = 'title'; UI.hud(false); UI.show('title'); UI.setPlayers(G.players); startDemo(); }
+  function goTitle() { G.state = 'title'; UI.hud(false); UI.show('title'); BBH.Cosmetics.apply(save.cosmetics); UI.setPlayers(G.players); startDemo(); }
   function goLevels() { G.state = 'levels'; UI.hud(false); UI.renderLevels(BBH.LEVELS, save); UI.show('levels'); if (!G.demo) startDemo(); }
+  function goShop() {
+    G.shopReturn = G.state === 'levels' ? 'levels' : 'title';
+    G.state = 'shop'; UI.hud(false); UI.renderShop(save.cosmetics); UI.show('shop');
+  }
+  function leaveShop() { if (G.shopReturn === 'levels') goLevels(); else goTitle(); }
 
   function pause() { if (G.state === 'playing') { G.state = 'paused'; UI.setReplayLabel(save.replay); UI.show('pause'); Sound.back(); } }
   function resume() { if (G.state === 'paused') { G.state = 'playing'; UI.show(null); UI.hud(true); last = performance.now(); Input.clearEdges(); } }
 
   // ------------------------------------------------------------------ demo (title backdrop)
   function startDemo() {
+    BBH.Cosmetics.apply(save.cosmetics);
     G.demo = new BBH.Level(BBH.LEVELS[0], 4);
     G.demo.onEvent = (name, d) => {
       if (name === 'hit') { particles.sparks(d.x, d.y, d.blob.style.color, 8, 240); particles.ring(d.x, d.y, '#fff', 60); }
@@ -332,6 +345,21 @@
   UI.on.players = setPlayers;
   UI.on.toLevels = goLevels;
   UI.on.toTitle = goTitle;
+  UI.on.shop = goShop;
+  UI.on.shopBack = leaveShop;
+  UI.on.shopItem = (player, kind, id) => {
+    const result = BBH.Cosmetics.buyOrEquip(save.cosmetics, player, kind, id);
+    if (!result.ok) {
+      if (result.reason === 'coins') UI.toast(`P${player + 1} needs ${result.needed} more ◈`, 1800);
+      return;
+    }
+    persist(); UI.renderShop(save.cosmetics); UI.setPlayers(G.players);
+    UI.toast(`${result.item.name} equipped for P${player + 1}!`, 1500);
+  };
+  UI.on.ballSkin = (id) => {
+    BBH.Cosmetics.equipBall(save.cosmetics, id); persist(); UI.renderShop(save.cosmetics);
+    const item = BBH.Cosmetics.balls.find((b) => b.id === id); UI.toast(`${item.name} ball equipped — free!`, 1500);
+  };
   UI.on.pick = (i) => startLevel(i);
   UI.on.resume = resume;
   UI.on.restart = () => startLevel(G.levelIdx);
@@ -348,11 +376,16 @@
     switch (G.state) {
       case 'title':
         if (c === 'Enter' || c === 'Space') { Sound.click(); goLevels(); }
+        else if (c === 'KeyS') { Sound.click(); goShop(); }
         else if (c === 'Digit2' || c === 'Digit3' || c === 'Digit4') { Sound.click(); setPlayers(+c.slice(5)); }
         break;
       case 'levels':
         if (c === 'Escape') { Sound.back(); goTitle(); }
+        else if (c === 'KeyS') { Sound.click(); goShop(); }
         else if (/^Digit[1-9]$/.test(c) && +c.slice(5) <= BBH.LEVELS.length) { Sound.click(); startLevel(+c.slice(5) - 1); }
+        break;
+      case 'shop':
+        if (c === 'Escape') { Sound.back(); leaveShop(); }
         break;
       case 'playing':
         if (c === 'Escape' || c === 'KeyP') pause();
